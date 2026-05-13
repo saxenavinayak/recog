@@ -1,0 +1,12 @@
+[project]
+name = "recog"
+version = "0.1.0"
+description = "e2e solution for custom face recognition+inference on an rtsp stream"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "insightface>=0.7.3",
+    "onnxruntime>=1.26.0",
+    "pillow>=12.2.0",
+    "pillow-heif>=1.3.0",
+]
