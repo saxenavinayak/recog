@@ -1,3 +1,4 @@
+# This script consumes data from a postgres db, stores them as a dataframe, and clusters datapoints together using hierarchial based scanning (hdbscan)
 from sklearn.datasets import make_blobs
 import pandas as pd
 import hdbscan
@@ -50,3 +51,8 @@ clusterer.fit(embeddings)
 
 print(clusterer.labels_)
 print(clusterer.labels_.max())
+id = 1
+for item in clusterer.labels_:
+    if item == 30:
+        print(f"30 found on image {rows[id-1][1]}")
+    id+=1

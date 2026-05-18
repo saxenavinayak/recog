@@ -1,3 +1,6 @@
+#  This script consumes images, at a specified path, generates normed embeddings usiung insightFace, and uploads embeddings as pgvector to postgres
+
+
 import cv2
 import numpy as np
 import insightface
@@ -40,12 +43,13 @@ cursor.execute("""
 CREATE TABLE IF NOT EXISTS photo_analysis (
     id SERIAL PRIMARY KEY,
     image_name TEXT NOT NULL,
-    norm_embedded_tensor VECTOR(512) NOT NULL
+    norm_embedded_tensor VECTOR(512) NOT NULL,
+    bounding_box VECTOR(4) NOT NULL
 )               
 """)
 conn.commit()
 
-query = "INSERT INTO photo_analysis (image_name, norm_embedded_tensor) VALUES (%s, %s)"
+query = "INSERT INTO photo_analysis (image_name, norm_embedded_tensor, bounding_box) VALUES (%s, %s, %s)"
 
 path = "/mnt/e/whyyy/"
 images = os.listdir(path)
@@ -67,8 +71,8 @@ for image in path_to_media:
         for face in faces:
             genders += face.sex
             embedding = face.normed_embedding
-            cursor.execute(query, (image, embedding.tolist()))
-            print(face.normed_embedding.shape)
+            face_box = face.bbox.astype(np.int)
+            cursor.execute(query, (image, embedding.tolist(), face_box.tolist()))
         conn.commit()
         print(f"For Image: {image}, genders are {genders} ")
 
