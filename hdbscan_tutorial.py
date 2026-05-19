@@ -38,21 +38,36 @@ conn = psycopg2.connect(
 )
 register_vector(conn)
 cursor = conn.cursor()
-cursor.execute("SELECT id, image_name, norm_embedded_tensor FROM photo_analysis")
+cursor.execute("SELECT id, image_name, norm_embedded_tensor, bounding_box FROM photo_analysis")
 rows = cursor.fetchall()
+
+
+df = pd.DataFrame(rows, columns=["id", "image_name", "embedding", "bounding_box"])
+embeddings  = np.array([r[2] for r in rows])
+
+
+clusterer.fit(embeddings)
+
+df["image_labels"] = clusterer.labels_
+print(df.head())
+
+new_label_row = """
+ALTER TABLE photo_analysis
+ADD COLUMN IF NOT EXISTS image_labels INTEGER
+"""
+
+cursor.execute(new_label_row)
+for index, row in df.iterrows():
+    cursor.execute(
+        "UPDATE photo_analysis SET image_labels = %s WHERE id = %s",
+        (
+            int(row["image_labels"]),
+            int(row["id"])
+        )
+    )
+
+conn.commit()
 conn.close()
 
 
 
-embeddings  = np.array([r[2] for r in rows])
-print(embeddings.shape)
-
-clusterer.fit(embeddings)
-
-print(clusterer.labels_)
-print(clusterer.labels_.max())
-id = 1
-for item in clusterer.labels_:
-    if item == 30:
-        print(f"30 found on image {rows[id-1][1]}")
-    id+=1
