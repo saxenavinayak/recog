@@ -70,4 +70,4 @@ conn.commit()
 conn.close()
 
 
-
+print(df[(df["image_labels"] == 2)])
