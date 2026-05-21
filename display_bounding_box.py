@@ -9,7 +9,10 @@ from PIL import Image
 from pillow_heif import register_heif_opener
 import os
 import psycopg2
+from helpers.db_connector import postgress_connection
+from pgvector.psycopg2 import register_vector
 
+import pandas as pd
 # np.float = float    
 # np.int = int   #module 'numpy' has no attribute 'int'
 # np.object = object    #module 'numpy' has no attribute 'object'
@@ -52,25 +55,46 @@ for each image in label:
         simil.append(s)
     average = mean(simil)
     avg_cosine_images.append((image, average))
-best_candidate_image = max(avg_cosine_images, key=average)
-
-        
-    
-        
+best_candidate_image = max(avg_cosine_images, key=average)        
 """
 
-img = cv2.imread("/mnt/e/whyyy/JAXW0072.JPG")
+# img = cv2.imread("/mnt/e/whyyy/JAXW0072.JPG")
 
 
-# height, width, _ = image.shape
-# print(f"Loaded image size: {width}x{height}")
 
 
-bbox_data = [2441.0, 1693.0, 2639.0, 1980.0]
+# bbox_data = [2441.0, 1693.0, 2639.0, 1980.0]
 
-# # Map them correctly by extracting the X and Y coordinates
-# # Remember: OpenCV wants (X, Y)
-start_point = (int(bbox_data[0]), int(bbox_data[1]))  # (x1, y1) -> (750, 2011)
-end_point = (int(bbox_data[2]), int(bbox_data[3]))
-cv2.rectangle(img, start_point, end_point, (0, 255, 0), 2)
-cv2.imwrite('output_bounded.jpg', img)
+# # # Map them correctly by extracting the X and Y coordinates
+# # # Remember: OpenCV wants (X, Y)
+# start_point = (int(bbox_data[0]), int(bbox_data[1]))  # (x1, y1) -> (750, 2011)
+# end_point = (int(bbox_data[2]), int(bbox_data[3]))
+# cv2.rectangle(img, start_point, end_point, (0, 255, 0), 2)
+# cv2.imwrite('output_bounded.jpg', img)\
+
+
+
+
+
+
+
+conn = postgress_connection()
+register_vector(conn)
+cursor = conn.cursor()
+
+cursor.execute("SELECT id, image_name, norm_embedded_tensor, bounding_box, image_labels FROM photo_analysis WHERE image_labels=1")
+rows = cursor.fetchall()
+
+df = pd.DataFrame(rows, columns=["id", "image_name", "norm_embedded_tensor", "bounding_box", "image_labels"])
+
+avg_cosine_images = np.array([])
+for row in df.itertuples():
+    current_candidate_tensor = row.norm_embedded_tensor
+
+    simil = np.array([])
+    for another_row in df.itertuples():
+        tensor = another_row.norm_embedded_tensor
+        similarity = float(np.dot(current_candidate_tensor, tensor))
+        simil = np.append(simil, similarity)
+    print(f"The average cosine similarity score for image {row.image_name} is {np.mean(simil)}")
+
