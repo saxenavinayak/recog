@@ -9,7 +9,7 @@ from PIL import Image
 from pillow_heif import register_heif_opener
 import os
 import psycopg2
-from helpers.db_connector import postgress_connection
+from helpers.db_connector import postgres_connection
 from pgvector.psycopg2 import register_vector
 
 import pandas as pd
@@ -18,7 +18,7 @@ import pandas as pd
 # get medoid image (get the image which has the embedding with the higest average cosine similarity to all other embeddings)
 
 
-conn = postgress_connection()
+conn = postgres_connection()
 register_vector(conn)
 cursor = conn.cursor()
 

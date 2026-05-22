@@ -11,6 +11,7 @@ from PIL import Image
 from pillow_heif import register_heif_opener
 import os
 import psycopg2
+from helpers.db_connector import postgres_connection
 # Source - https://stackoverflow.com/a/75837322
 # Posted by Vegarus, modified by community. See post 'Timeline' for change history
 # Retrieved 2026-05-11, License - CC BY-SA 4.0
@@ -22,19 +23,24 @@ np.int = int   #module 'numpy' has no attribute 'int'
 np.object = object    #module 'numpy' has no attribute 'object'
 np.bool = bool    #module 'numpy' has no attribute 'bool'
 
-pg_pwd = os.getenv("POSTGRES_PW")
-pg_usr = os.getenv("POSTGRES_USER")
-pg_host = os.getenv("POSTGRES_HOST")
-pg_port = os.getenv("POSTGRES_PORT")
-conn = psycopg2.connect(
-    database="postgres",
-    user=pg_usr,
-    password=pg_pwd,
-    host=pg_host,
-    port=pg_port
+class IngestImages:
+    def get_list_of_image_paths(self, path: str):
+        images = os.listdir(path)
+        images = [item for item in images if "JPG" in item]
+        if len(images) == 0:
+            print(f"no images in dir {path}, or no .JPG images found, exiting")
+            return
+        print(f"Detecting faces for {len(images)} images")
+        full_path = [f"{path}{item}" for item in images]
+        return full_path
 
-)
 
+    def run_photo_analysis(self, path: str):
+        paths_to_images = self.get_list_of_image_paths(path)
+
+
+
+conn = postgres_connection()
 # Add pgvector extension
 cursor = conn.cursor()
 cursor.execute("CREATE EXTENSION IF NOT EXISTS vector")
