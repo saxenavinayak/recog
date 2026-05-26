@@ -7,6 +7,7 @@ from insightface.data import get_image as ins_get_image
 from PIL import Image
 from pillow_heif import register_heif_opener
 import os
+import hdbscan
 
 from helpers.db_connector import get_db
 from models.recog_models import PhotoResource
@@ -31,7 +32,7 @@ class IngestImages:
         full_path = [f"{path}{item}" for item in images]
         return full_path
 
-
+# We should iso photo analysis to a single function (ie a method that runs photo analysis for a single image)
     def run_photo_analysis(self, path: str):
         app = FaceAnalysis(providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
         app.prepare(ctx_id=0, det_size=(640, 640))
@@ -59,6 +60,18 @@ class IngestImages:
                         bounding_box = face_box.tolist()
                     )
                     db.add(new_photo_asset)
+    # Fetches id,image_name,norm_embedded_tensor,bounding_box from table, and runs hdbscan on it
+    def categorize_embeddings(self):
+        with get_db() as db:
+            clusterer = hdbscan.HDBSCAN()
+            rows = db.query(PhotoResource).all()
+            embeddings = np.array([photo.norm_embedded_tensor for photo in rows])
+
+            clusterer.fit(embeddings)
+            for i in range(len(clusterer.labels_)):
+                rows[i].label = int(clusterer.labels_[i])
+            db.commit()
+
 
 new_job = IngestImages()
 new_job.run_photo_analysis(path="/mnt/e/whyyy/")

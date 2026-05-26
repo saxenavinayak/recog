@@ -6,7 +6,7 @@ import os
 import psycopg2
 import numpy as np
 from pgvector.psycopg2 import register_vector
-from helpers.db_connector import postgress_connection
+from helpers.db_connector import postgres_connection
 # Official docs https://hdbscan.readthedocs.io/en/latest/basic_hdbscan.html
 
 # blobs, labels = make_blobs(n_samples=2000, n_features=10)
@@ -23,7 +23,7 @@ clusterer = hdbscan.HDBSCAN()
 
 
 ##### Downloading data
-conn = postgress_connection()
+conn = postgres_connection()
 register_vector(conn)
 cursor = conn.cursor()
 cursor.execute("SELECT id, image_name, norm_embedded_tensor, bounding_box FROM photo_analysis")
