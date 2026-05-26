@@ -15,6 +15,17 @@ class PhotoResource(Base):
     label = Column(Integer, nullable=True)
 
 
+class PersonCandidate(Base):
+    __tablename__ = 'entity_embeddings'
+
+    id = Column(Integer, primary_key=True, index=True)
+    image_name = Column(String, nullable=False)
+    person_name = Column(String, nullable=True) # This would be user defined
+    embedding = Column(Vector(512), nullable=False)
+
+
+
+
 
 
 Base.metadata.create_all(bind=engine)
