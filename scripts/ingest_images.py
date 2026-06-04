@@ -10,7 +10,7 @@ import os
 import hdbscan
 
 from helpers.db_connector import get_db
-from models.recog_models import PhotoResource
+from models.recog_models import PhotoResource, PersonCandidate
 # Source - https://stackoverflow.com/a/75837322
 # Posted by Vegarus, modified by community. See post 'Timeline' for change history
 # Retrieved 2026-05-11, License - CC BY-SA 4.0
@@ -60,6 +60,7 @@ class IngestImages:
                         bounding_box = face_box.tolist()
                     )
                     db.add(new_photo_asset)
+    
     # Fetches id,image_name,norm_embedded_tensor,bounding_box from table, and runs hdbscan on it
     def categorize_embeddings(self):
         with get_db() as db:
@@ -72,6 +73,29 @@ class IngestImages:
                 rows[i].label = int(clusterer.labels_[i])
             db.commit()
 
+    def compute_medoids(self, label: int):
+        avg_cosine_images = []
+        with get_db() as db:
+            rows = db.query(PhotoResource).filter(PhotoResource.label == label).all()
+
+            for row in rows:
+                current_candidate_tensor = row.norm_embedded_tensor
+                simil = np.array([])
+
+                for another_row in rows:
+                    tensor = another_row.norm_embedded_tensor
+                    similarity_score = float(np.dot(current_candidate_tensor, tensor))
+                    simil = np.append(simil, similarity_score)
+                avg_cosine_images.append(
+                    (row.image_name, np.mean(simil), row.bounding_box, current_candidate_tensor)
+                )
+            best = max(avg_cosine_images, key=lambda x: x[1])
+            best_person = PersonCandidate(
+                image_name = best[0],
+                embedding = best[3].tolist()
+            )
+            db.add(best_person)
 
 new_job = IngestImages()
-new_job.run_photo_analysis(path="/mnt/e/whyyy/")
+# new_job.run_photo_analysis(path="/mnt/e/whyyy/")
+new_job.compute_medoids(5)
