@@ -26,6 +26,9 @@ class PersonCandidate(Base):
 
 
 
-
+class Person(Base):
+    __tablename__ = 'persons'
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
 
 Base.metadata.create_all(bind=engine)
