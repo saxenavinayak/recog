@@ -1,7 +1,6 @@
 from sqlalchemy import Column, Integer, String
 from pgvector.sqlalchemy import Vector
-from helpers.db_connector import Base, engine
-
+from helpers.db_connector import Base
 
 class PhotoResource(Base):
     __tablename__ = 'image_analysis'
@@ -31,4 +30,4 @@ class Person(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
 
-Base.metadata.create_all(bind=engine)
+
