@@ -5,6 +5,7 @@ description = "e2e solution for custom face recognition+inference on an rtsp str
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "alembic>=1.18.5",
     "hdbscan>=0.8.43",
     "insightface>=0.7.3",
     "onnxruntime-gpu>=1.26.0",
